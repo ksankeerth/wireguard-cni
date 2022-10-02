@@ -1,6 +1,7 @@
 package wireguard
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -30,6 +31,30 @@ func (w *WGQuickManager) Up(device string) error {
 
 func (w *WGQuickManager) Down(device string) error {
 	return run(w.logOutput, "wg-quick", "down", device)
+}
+
+func (w *WGQuickManager) Exists(device string) (bool, error) {
+	cmd := []string{}
+	if w.namespace != "" {
+		//nsenter --net=/run/docker/netns/f1cffea8d447
+		cmd = append(cmd, "nsenter", fmt.Sprintf("--net=%s", w.namespace))
+	}
+	// TODO : wg show need root previleges
+	cmd = append(cmd, "wg", "show", device)
+	fmt.Fprintln(os.Stderr, cmd)
+
+	buf := new(bytes.Buffer)
+	writer := io.MultiWriter(buf, w.logOutput)
+
+	err := run(writer, cmd[0], cmd[1:]...)
+	if err != nil {
+		return false, err
+	}
+	output := buf.String()
+	if len(output) == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 // SetPeers will set peers by bringing the device down and up. The configuration file must be written before calling

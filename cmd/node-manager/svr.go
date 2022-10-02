@@ -112,6 +112,18 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		return nil, err
 	}
 
+	exists, err := wgManager.Exists(cfg.Wireguard.InterfaceName)
+	if err != nil {
+		log.Println("failed to check exiting interface", cfg.Wireguard.InterfaceName, "wg show")
+		return nil, err
+	}
+	if exists {
+		if err = wgManager.Down(cfg.Wireguard.InterfaceName); err != nil {
+			log.Println("failed to remove existing interface", cfg.Wireguard.InterfaceName, "down")
+			return nil, err
+		}
+	}
+
 	if err = wgManager.Up(cfg.Wireguard.InterfaceName); err != nil {
 		log.Println("failed to bring interface", cfg.Wireguard.InterfaceName, "up")
 		return nil, err

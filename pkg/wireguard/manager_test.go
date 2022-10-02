@@ -87,3 +87,34 @@ func Test_WGQuick_Config(t *testing.T) {
 		})
 	}
 }
+
+func Test_WG_Exists(t *testing.T) {
+
+	wireguardM := &wireguardv1connect.MockWireguardServiceClient{}
+	wgManager := &WGQuickManager{
+		client:   wireguardM,
+		key:      [32]byte{},
+		endpoint: "192.168.1.1:51820",
+		addr:     "10.0.0.1",
+	}
+
+	t.Run("check existence of wg0  when actually wg0 exists", func(t *testing.T) {
+		r := require.New(t)
+		err := wgManager.Up("wg0")
+		r.NoError(err)
+		defer func() {
+			err := wgManager.Down("wg0")
+			r.NoError(err)
+		}()
+		exists, err := wgManager.Exists("wg0")
+		r.NoError(err)
+		r.True(exists)
+	})
+	t.Run("check existence of wg0 when actually wg0 not exists", func(t *testing.T) {
+		r := require.New(t)
+		exists, err := wgManager.Exists("wg0")
+		r.NoError(err)
+		r.False(exists)
+	})
+
+}
