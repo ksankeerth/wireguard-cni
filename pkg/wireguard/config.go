@@ -116,6 +116,7 @@ func New(ctx context.Context, cfg Config, wgClient WGClient, client wireguardv1c
 
 	d, err := deviceIfExists(wgClient, cfg.Device)
 	if err != nil {
+		log.Printf("failed to check device existence: %v\n", err)
 		return nil, err
 	}
 
@@ -208,6 +209,7 @@ func generateKeys() (wgtypes.Key, error) {
 
 func deviceIfExists(c WGClient, name string) (*wgtypes.Device, error) {
 	d, err := c.Device(name)
+	
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
